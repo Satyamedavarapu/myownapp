@@ -8,7 +8,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  TextEditingController emailController, passwordController;
+  String email;
+  String password;
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
@@ -22,21 +23,25 @@ class _LoginScreenState extends State<LoginScreen> {
           children: <Widget>[
             Text('Login Page'),
             TextFormField(
-              controller: emailController,
+              onChanged: (val) {
+                email = val;
+              },
               keyboardType: TextInputType.emailAddress,
               validator: (val) {
-                if (val.isEmpty) {
+                if (val.isEmpty == true) {
                   return 'Email cannot be empty';
                 } else
                   return null;
               },
             ),
             TextFormField(
-              controller: passwordController,
+              onChanged: (val) {
+                password = val;
+              },
               keyboardType: TextInputType.text,
               obscureText: true,
               validator: (val) {
-                if (val.isEmpty) {
+                if (val.isEmpty == true) {
                   return 'Email cannot be empty';
                 } else
                   return null;
@@ -71,23 +76,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> login() async {
     var formState = _formKey.currentState;
-    var email = emailController.text.trim();
-    var password = passwordController.text.trim();
 
-    if (formState.validate()) {
+    if (formState.validate() == true) {
       formState.save();
 
+      print('Form Valid');
+      print(email);
+      print(password);
       AuthResult authResult = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
-
-      if (authResult.user != null) {
-
-       Navigator.push(context, MaterialPageRoute(builder: (context) => Welcome(authResult.user),));
-
-
-
-
-      }
-    }
+      print(authResult.user);
+      print(authResult.user.displayName);
+      print(authResult.user.uid);
+      if (authResult.user.uid != null) {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Welcome(authResult.user),
+            ));
+      } else
+        return null;
+    } else
+      return null;
   }
 }
