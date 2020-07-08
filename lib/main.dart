@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:screenwriting/login.dart';
+import 'package:screenwriting/screens/auth_screens/login_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -10,15 +10,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Writer App',
+      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: true,
       theme: ThemeData(
-        
-        primarySwatch: Colors.blue,
-        
+        primarySwatch: Colors.red,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: LoginScreen(),
     );
   }
 }
-
