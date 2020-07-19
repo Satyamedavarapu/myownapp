@@ -6,18 +6,21 @@ import 'package:screenwriting/blocs/auth_bloc.dart';
 import 'package:screenwriting/screens/auth_screens/sign_up.dart';
 import 'package:screenwriting/screens/home_screen/home_screen.dart';
 import 'package:screenwriting/utils/util_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginTrial extends StatefulWidget {
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _LoginTrialState createState() => _LoginTrialState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginTrialState extends State<LoginTrial> {
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   AuthenticationBloc authBloc = AuthenticationBloc().getInstance();
   FlutterToast toast;
 
   var error;
+
+  bool isLoading = false;
 
   TextEditingController nameController = new TextEditingController();
   TextEditingController passwordController = new TextEditingController();
@@ -36,44 +39,47 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  showAlert(String error) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          elevation: 10.0,
-          backgroundColor: UtilColors.richBrown,
-          child: Container(
-            color: Colors.lightBlue,
-            width: double.maxFinite,
-            child: Row(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0, left: 4.0),
-                  child: Icon(Icons.error_outline),
-                ),
-                Expanded(
-                  child: Text(
-                    error,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
-                  child: IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                )
-              ],
+  Widget loader() {
+    if (isLoading == true) {
+      return Center(child: CircularProgressIndicator());
+    } else
+      return null;
+  }
+
+  Widget showAlert() {
+    if (error != null) {
+      return Container(
+        color: Colors.lightBlue,
+        width: double.maxFinite,
+        child: Row(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0, left: 4.0),
+              child: Icon(Icons.error_outline),
             ),
-          ),
-        );
-      },
-    );
+            Expanded(
+              child: Text(
+                error,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    error = null;
+                  });
+                },
+              ),
+            )
+          ],
+        ),
+      );
+    } else
+      return Container();
   }
 
   @override
@@ -92,11 +98,9 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
-                  Container(
-                    height: height / 3,
-                    child: Align(
-                        alignment: Alignment.topCenter,
-                        child: Image.asset('assets/bookbg.png')),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 32.0),
+                    child: showAlert(),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0, right: 8.0),
@@ -291,27 +295,34 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> login() async {
     if (validateAndSave() == true) {
+      isLoading = true;
       var email = nameController.text.trim();
       var password = passwordController.text.trim();
+      SharedPreferences preferences = await SharedPreferences.getInstance();
 
       AuthResult authResult = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
 
       try {
-        if (authResult.user != null) {
+        if (authResult.user.uid != null) {
+          isLoading = true;
+          preferences.setString('EMAIL', email);
+          preferences.setString('PASSWORD', password);
+          print('preferences set');
           return Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                   builder: (context) => HomePage(authResult.user)));
+          isLoading = false;
         } else
           return null;
-      } catch (e) {
-        print('Printing platformException ' + e.toString());
-        print('Printing error to be displayed ' + e.message.toString());
-        showAlert(e.message.toString());
+      } on PlatformException catch (e) {
+        setState(() {
+          error = e.message;
+        });
       }
-    } else
-      return null;
+      isLoading = false;
+    }
   }
 
   TextStyle textFieldStyle = new TextStyle(

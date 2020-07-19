@@ -8,19 +8,6 @@ class AuthenticationRepo {
     return _instance;
   }
 
-  AuthCalls authCalls = AuthCalls();
-
-  Future<void> createUser(String email, String password) async {
-    return await authCalls.createUser(email, password);
-  }
-
-  Future<void> loginUser(String email, String password) async {
-    return await authCalls.loginUser(email, password);
-  }
-
-}
-
-class AuthCalls {
   Future<void> createUser(String email, String password) async {
     AuthResult result = await FirebaseAuth.instance
         .createUserWithEmailAndPassword(email: email, password: password);
